@@ -1,0 +1,195 @@
+// https://api.faceit.com/democracy/v1/match/1-797a6c96-9e0e-48d0-bd9e-e305c7aed765
+{
+    "payload": {
+        "match_id": "1-797a6c96-9e0e-48d0-bd9e-e305c7aed765",
+        "voters": {
+            "faction2": [
+                "9d1bf22e-5d64-462b-971a-9fb9a7b41857"
+            ],
+            "faction1": [
+                "0a71ee5b-64b4-49b9-948e-074764f3dd8d"
+            ]
+        },
+        "conditions": {
+            "turn_to_vote": "faction1",
+            "ticket": 1,
+            "round": 7,
+            "action": "drop",
+            "time_left_to_vote": 19099
+        },
+        "tickets": [
+            {
+                "entities": [
+                    {
+                        "status": "drop",
+                        "selected_by": "faction1",
+                        "properties": {
+                            "image_lg": "https://cdn.faceit.com/games/votables/countries/us_428x212.jpg",
+                            "image_sm": "https://cdn.faceit.com/games/votables/countries/us_110x55.jpg",
+                            "name": "Chicago",
+                            "class_name": "Chicago",
+                            "game_location_id": "Chicago",
+                            "guid": "Chicago"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction2",
+                        "properties": {
+                            "image_lg": "https://cdn.faceit.com/games/votables/countries/us_428x212.jpg",
+                            "image_sm": "https://cdn.faceit.com/games/votables/countries/us_110x55.jpg",
+                            "name": "Denver",
+                            "class_name": "Denver",
+                            "game_location_id": "Denver",
+                            "guid": "Denver"
+                        }
+                    },
+                    {
+                        "status": "pick",
+                        "selected_by": "faction2",
+                        "properties": {
+                            "image_lg": "https://cdn.faceit.com/games/votables/countries/us_428x212.jpg",
+                            "image_sm": "https://cdn.faceit.com/games/votables/countries/us_110x55.jpg",
+                            "name": "Dallas",
+                            "class_name": "Dallas",
+                            "game_location_id": "Dallas",
+                            "guid": "Dallas"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction2",
+                        "properties": {
+                            "guid": "LosAngeles",
+                            "image_lg": "https://cdn.faceit.com/games/votables/countries/us_428x212.jpg",
+                            "image_sm": "https://cdn.faceit.com/games/votables/countries/us_110x55.jpg",
+                            "name": "LosAngeles",
+                            "class_name": "LosAngeles",
+                            "game_location_id": "LosAngeles"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction1",
+                        "properties": {
+                            "image_lg": "https://cdn.faceit.com/games/votables/countries/us_428x212.jpg",
+                            "image_sm": "https://cdn.faceit.com/games/votables/countries/us_110x55.jpg",
+                            "name": "NewYork",
+                            "class_name": "NewYork",
+                            "game_location_id": "NewYork",
+                            "guid": "NewYork"
+                        }
+                    }
+                ],
+                "entity_type": "location",
+                "vote_type": "",
+                "config": null,
+                "timeout": 0
+            },
+            {
+                "entities": [
+                    {
+                        "status": "drop",
+                        "selected_by": "faction1",
+                        "properties": {
+                            "game_map_id": "de_dust2",
+                            "guid": "de_dust2",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/ea89f284-db87-48e4-a492-fee976f40149_1589575282787.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/0a916112-ed82-4b25-b79d-33bc1b137e7d_1589575275416.jpeg",
+                            "name": "Dust2",
+                            "class_name": "de_dust2"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction2",
+                        "properties": {
+                            "name": "Mirage",
+                            "class_name": "de_mirage",
+                            "game_map_id": "de_mirage",
+                            "guid": "de_mirage",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/b846f806-1957-4456-952e-e0f85233b5d7_1589195893467.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/30358226-693b-4b9d-9da9-afd1d5f1753e_1589193685453.jpeg"
+                        }
+                    },
+                    {
+                        "status": "open",
+                        "selected_by": "n/a",
+                        "properties": {
+                            "name": "Nuke",
+                            "class_name": "de_nuke",
+                            "game_map_id": "de_nuke",
+                            "guid": "de_nuke",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/2d11b059-8dc0-4b27-af45-383bb1f2edb3_1589578450447.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/ae5d92c0-2aee-45e3-9a53-396fa0b103f7_1589578446264.jpeg"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction2",
+                        "properties": {
+                            "guid": "de_overpass",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/0fe0aa60-193e-4f0b-aa8a-64d3388291bf_1589195875398.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/7654d0b5-bc0e-41bd-a59d-4ffa67da9a92_1589193763922.jpeg",
+                            "name": "Overpass",
+                            "class_name": "de_overpass",
+                            "game_map_id": "de_overpass"
+                        }
+                    },
+                    {
+                        "status": "open",
+                        "selected_by": "n/a",
+                        "properties": {
+                            "class_name": "de_train",
+                            "game_map_id": "de_train",
+                            "guid": "de_train",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/92a510c3-5c87-49fe-b37c-e4629a91475f_1589195852968.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/15f99292-8172-42e8-ac7e-45f9e800e8bb_1589193814491.jpeg",
+                            "name": "Train"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction1",
+                        "properties": {
+                            "class_name": "de_inferno",
+                            "game_map_id": "de_inferno",
+                            "guid": "de_inferno",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/696875d8-f504-44ff-9f4f-26bd81a237fe_1589575508999.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/007bc454-3d90-4e47-8ba6-a567e07741f0_1589193843230.jpeg",
+                            "name": "Inferno"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction1",
+                        "properties": {
+                            "name": "Vertigo",
+                            "class_name": "de_vertigo",
+                            "game_map_id": "de_vertigo",
+                            "guid": "de_vertigo",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/973a97e8-680b-4e78-ae80-f18b0cb22f17_1589578674213.jpeg",
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/0b16dd4c-fc45-4b39-8488-62d362545a4a_1594388355393.jpeg"
+                        }
+                    },
+                    {
+                        "status": "drop",
+                        "selected_by": "faction2",
+                        "properties": {
+                            "image_sm": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/7e1736a3-8ea9-4e2b-9bfc-2b0c97105823_1607106278884.jpeg",
+                            "name": "Ancient",
+                            "class_name": "de_ancient",
+                            "game_map_id": "de_ancient",
+                            "guid": "de_ancient",
+                            "image_lg": "https://assets.faceit-cdn.net/third_party/games/4f899245-2fa8-4e52-ad9a-4a363613c19e/assets/votables/61e9180e-eddc-4cd8-93e1-074a60788013_1607106287430.jpeg"
+                        }
+                    }
+                ],
+                "entity_type": "map",
+                "vote_type": "",
+                "config": null,
+                "timeout": 0
+            }
+        ]
+    }
+}

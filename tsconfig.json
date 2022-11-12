@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "watch": true,
+    "lib": [
+      "dom",
+      "es2021"
+    ],
+    "outFile": "extension/faceit-nerdalyzer.js"
+  }
+}

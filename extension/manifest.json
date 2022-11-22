@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Faceit Nerdalyzer",
   "version": "1.0.0",
-  "description": "Nerdalyzer the faceit odds",
+  "description": "Nerdalyze the faceit odds",
   "author": "WTFender",
   "homepage_url": "https://wtfender.com",
   "icons": {
@@ -17,7 +17,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.faceit.com/*"
+        "https://www.faceit.com/*/csgo/room/*"
       ],
       "js": [
         "faceit-nerdalyzer.js"

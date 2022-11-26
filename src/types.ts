@@ -1,19 +1,22 @@
+type MatchStatus = 'Voting' | 'Configuring' | 'Ready' | 'Finished'
+
 type PlayerMapOdds = {
   played: number
   won: number
 }
 
 type MapOdds = {
-    name: string
-    rank: number
-    played: number
-    won: number
-    winPct: number
+  name: string
+  rank: number
+  played: number
+  won: number
+  winPct: number
 }
 
 type MatchOdds = {
-  team1: MapOdds[];
-  team2: MapOdds[];
+  team1: MapOdds[]
+  team2: MapOdds[]
+  self: MapOdds[]
 }
 
 type PlayerStatsData = {

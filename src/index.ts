@@ -1,69 +1,143 @@
-const DEBUG = true;
-
-const API_BASEURL = 'https://api.faceit.com';
-
-const REX_MATCH_URL = /^https:\/\/www\.faceit\.com\/\w+\/csgo\/room\/(?<matchId>1(\-\w+){5})$/
-
-const MAPS = [
-  'de_ancient',
-  'de_anubis',
-  'de_dust2',
-  'de_inferno',
-  'de_mirage',
-  'de_nuke',
-  'de_overpass',
-  'de_train',
-  'de_vertigo',
-];
-
-var MATCH_REFRESH;
-
-var MATCH: Match;
-
-function log(v){
-  if(DEBUG){console.log(v)}
-}
-
-class Match {
-  id: string;
-  callback: Function;
+class Nerdalyzer {
+  debug: boolean;
+  app: string;
+  maps: string[];
+  baseurl: string;
+  rexMatchUrl: RegExp;
+  // retrieved elements
+  id: string; // match id
+  shadow: ShadowRoot;
+  matchroom: HTMLElement;
+  infoDiv: HTMLElement;
+  nickname: string;
+  // retrieved data
   data: MatchData;
   team1: PlayerStatsData[];
   team2: PlayerStatsData[];
   self: PlayerStatsData[];
+  // calculated
+  refresh: number;
   selfStats: MapOdds[];
-  nickname: string;
+  table?: HTMLElement;
 
-  constructor(id: string, callback: Function) {
-    this.id = id
-    this.callback = callback
+  constructor(debug=false, poll=2000) {
+    this.log('init:Nerdalyzer')
+    this.debug = debug
+    this.app = 'nerdalyzer'
+    this.baseurl = 'https://api.faceit.com'
+    this.rexMatchUrl = /^https:\/\/www\.faceit\.com\/\w+\/csgo\/room\/(?<matchId>1(\-\w+){5})$/
+    this.maps = [
+      'de_ancient',
+      'de_anubis',
+      'de_dust2',
+      'de_inferno',
+      'de_mirage',
+      'de_nuke',
+      'de_overpass',
+      'de_train',
+      'de_vertigo',
+    ];
     this.team1 = []
     this.team2 = []
     this.self = []
     this.selfStats = []
-    this.getMatch()
+    this.refresh = 0
+    let nerd = this
+    nerd.refresh = setInterval(() => {
+      nerd.process()
+    }, poll);
+  }
+
+  process() {
+    this.log('func:process')
+    if (!this.isMatchLobbyUrl()) { this.reset() }
+    if (!this.hasElements()) { this.reset() }
+    if (this.isMatchTable()) {
+      // nice
+    } else if (this.table) {
+      this.log('func:process:isMatchTable:false:table exists, but not the right one?')
+      this.log(this.table)
+    } else {
+      this.getMatch()
+    }
+  }
+
+  log(v) {
+    if (this.debug) {
+      if (typeof (v) !== 'string') {
+        console.log(v)
+      } else {
+        console.log(`${this.app}:${v}`)
+      }
+    }
+  }
+
+  reset() {
+    this.log('func:reset')
+    this.team1 = []
+    this.team2 = []
+    this.self = []
+    this.selfStats = []
+    this.shadow = null;
+    this.matchroom = null;
+    this.infoDiv = null;
+    this.table = null;
+  }
+
+  isMatchLobbyUrl() {
+    let isLobby = false
+    let match = window.location.href.match(this.rexMatchUrl)
+    if (match) {
+      this.id = match.groups.matchId
+      isLobby = true
+    }
+    this.log(`func:isMatchLobbyUrl:${isLobby}`)
+    return isLobby
+  }
+
+  hasElements() {
+    let hasAllElements = true
+    this.shadow = document.getElementById("parasite-container").shadowRoot
+    if (!this.shadow) { hasAllElements = false }
+    this.matchroom = this.shadow.getElementById("MATCHROOM-OVERVIEW")
+    if (!this.matchroom) { hasAllElements = false }
+    this.infoDiv = this.matchroom.querySelector('[name="info"]')
+    if (!this.infoDiv) { hasAllElements = false }
+    this.log(`func:hasElements:${hasAllElements}`)
+    return hasAllElements
+  }
+
+  isMatchTable() {
+    let isMatch = false
+    this.table = this.shadow.getElementById('nerdalyzer-table')
+    if (this.table) {
+      if (this.table.getAttribute('name') === this.id) {
+        isMatch = true
+      }
+    }
+    this.log(`func:isMatchTable:${isMatch}`)
+    return isMatch
   }
 
   getMatch() {
-    log('getMatch')
-    fetch(API_BASEURL + `/match/v2/match/${this.id}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.code === 'OPERATION-OK') {
-        this.data = data.payload
-        setTimeout(() => {
-          this.nickname = document.getElementsByClassName('nickname')[0].textContent
-          this.getPlayers()
-        }, 1000);
-        
-      } else {
-        new Error(data)
-      }
-    });
+    this.log(`func:getMatch:${this.id}`)
+    fetch(this.baseurl + `/match/v2/match/${this.id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.code === 'OPERATION-OK') {
+          this.data = data.payload
+          setTimeout(() => {
+            this.nickname = document.getElementsByClassName('nickname')[0].textContent
+            this.getPlayers()
+          }, 1000);
+        } else {
+          new Error(data)
+        }
+      });
   }
 
   getPlayers() {
-    log('getPlayers')
+    this.log('func:getPlayers')
     this.data.teams.faction1.roster.forEach(player => {
       this.getPlayerStats(player, this.team1, this.self)
     });
@@ -73,37 +147,26 @@ class Match {
   }
 
   getPlayerStats(player: any, team: PlayerStatsData[], self: PlayerStatsData[]) {
-    let playerId = player.id
-    log(`getPlayerStats:${playerId}`)
-    fetch(API_BASEURL + `/stats/v1/stats/users/${playerId}/games/csgo`)
+    this.log(`func:getPlayerStats:${player.id}`)
+    fetch(this.baseurl + `/stats/v1/stats/users/${player.id}/games/csgo`)
       .then((response) => response.json())
       .then((data) => {
         if (data.lifetime) {
-          console.log(data)
           team.push(data)
-          if (player.nickname === this.nickname){
+          if (player.nickname === this.nickname) {
             self.push(data)
           }
-          if (this.team1.length === 5 && this.team2.length === 5) {
-            this.loaded()
-          }
+          this.loaded()
         } else {
           new Error(data)
         }
       });
   }
 
-  loaded() {
-    log('loaded')
-    let callback = this.callback
-    // setTimeout(() => { this.callback(odds) }, 2000);
-    //clearInterval(MATCH_REFRESH)
-    MATCH_REFRESH = setInterval(function(){ callback() }, 2000);
-  }
-
   calcTeamMapOdds(team): MapOdds[] {
+    this.log('func:calcTeamMapOdds')
     const teamMapOdds = [];
-    MAPS.forEach(map => {
+    this.maps.forEach(map => {
       const mapOdds = {
         name: map,
         rank: 0,
@@ -120,14 +183,13 @@ class Match {
               let won = Number(segment['segments'][map]['m2'])
               mapOdds.played += played
               mapOdds.won += won
-              if (player.nickname === this.nickname){
-                console.log('nicknameMatch')
+              if (player.nickname === this.nickname) {
                 this.selfStats.push({
                   name: map,
                   rank: 0,
                   played: played,
                   won: won,
-                  winPct: (won/played)
+                  winPct: (won / played)
                 })
               }
 
@@ -143,205 +205,154 @@ class Match {
   }
 
   odds(): MatchOdds {
-    log('calcOdds')
+    this.log('func:odds')
     const odds: MatchOdds = {
       team1: this.calcTeamMapOdds(this.team1),
       team2: this.calcTeamMapOdds(this.team2),
       self: this.calcTeamMapOdds(this.self)
     }
-    console.log(odds.self)
+    this.log(odds)
     return odds;
   }
-}
 
-function buildTable(odds: MatchOdds): [HTMLElement, HTMLTableElement] {
+  appendTeamMapCols(row: HTMLTableRowElement, team: string, mapOdds: MapOdds): HTMLTableRowElement {
+    let f_won = document.createElement('td')
+    let f_played = document.createElement('td')
+    let f_winPct = document.createElement('td')
+    f_won.setAttribute('id', `${team}-${mapOdds.name}-won`)
+    f_played.setAttribute('id', `${team}-${mapOdds.name}-played`)
+    f_winPct.setAttribute('id', `${team}-${mapOdds.name}-winpct`)
+    f_won.textContent = `${mapOdds.won}`
+    f_played.textContent = `${mapOdds.played}`
+    f_winPct.textContent = `${mapOdds.winPct.toFixed(2).replace('0.', '')}%`
+    f_won.style.textAlign = 'center'
+    f_played.style.textAlign = 'center'
+    f_winPct.style.textAlign = 'center'
+    f_winPct.style.backgroundColor = this.getColor(1 - mapOdds.winPct)
+    row.appendChild(f_won)
+    row.appendChild(f_played)
+    row.appendChild(f_winPct)
+    return row
+  }
   
-  const mapStats = document.createElement('table');
-  mapStats.setAttribute('id', 'nerdalyzer-table')
-  mapStats.setAttribute('name', MATCH.id)
-  const tbody = document.createElement('tbody');
-  const header = document.createElement('tr')
-  const head1 = document.createElement('th')
-  const head2 = document.createElement('th')
-  const head3 = document.createElement('th')
-  const head4 = document.createElement('th')
-  head2.textContent = MATCH.data.teams.faction1.name
-  head3.textContent = MATCH.data.teams.faction2.name
-  head4.textContent = MATCH.nickname
-  head2.style.maxWidth = '100px'
-  head3.style.maxWidth = '100px'
-  head4.style.maxWidth = '100px'
-  head2.style.overflow = 'hidden'
-  head3.style.overflow = 'hidden'
-  head4.style.overflow = 'hidden'
-  head2.style.textOverflow = 'ellipsis'
-  head3.style.textOverflow = 'ellipsis'
-  head4.style.overflow = 'hidden'
-  head2.style.whiteSpace = 'nowrap'
-  head3.style.whiteSpace = 'nowrap'
-  head4.style.overflow = 'hidden'
-  header.appendChild(head1)
-  header.appendChild(head2)
-  header.appendChild(head3)
-  header.appendChild(head4)
-  tbody.appendChild(header)
-  MAPS.forEach(mapName => {
-
-    let mapOdds = getMapOdds(mapName, odds)
-    let t1 = mapOdds[0]
-    let t2 = mapOdds[1]
-    let self = mapOdds[2]
+  buildTeamMapRow(mapName: string, odds: MatchOdds): HTMLTableRowElement {
     let row = document.createElement('tr')
     let f1 = document.createElement('td')
-    let f2 = document.createElement('td')
-    let f3 = document.createElement('td')
-    let f4 = document.createElement('td')
     f1.textContent = mapName.replace('de_', '')
-    f2.setAttribute('id', `team1-${mapName}-stats`)
-    f3.setAttribute('id', `team2-${mapName}-stats`)
-    f4.setAttribute('id', `self-${mapName}-stats`)
-    f2.textContent = `${t1.winPct.toFixed(2).replace('0.','')}%  ${t1.won}  ${t1.played}`
-    f3.textContent = `${t2.winPct.toFixed(2).replace('0.','')}%  ${t2.won}  ${t2.played}`
-    f4.textContent = `${self.winPct.toFixed(2).replace('0.','')}%  ${self.won}  ${self.played}`
     f1.style.textAlign = 'right'
-    f2.style.textAlign = 'center'
-    f3.style.textAlign = 'center'
-    f4.style.textAlign = 'center'
-    f2.style.backgroundColor = getColor(1-t1.winPct)
-    f3.style.backgroundColor = getColor(1-t2.winPct)
-    f4.style.backgroundColor = getColor(1-self.winPct)
     row.appendChild(f1)
-    row.appendChild(f2)
-    row.appendChild(f3)
-    row.appendChild(f4)
-    tbody.appendChild(row)
-  });
-  mapStats.appendChild(tbody)
-  console.log(mapStats)
-  let sectionHeader = document.createElement('strong')
-  sectionHeader.textContent = 'Nerdalyzer'
-  return [sectionHeader, mapStats]
-}
-
-function getColor(value) {
-  var hue = ((1 - value) * 120).toString(10);
-  return ["hsl(", hue, ",100%,30%)"].join("");
-}
-
-function getMapOdds(mapName: string, odds: MatchOdds): MapOdds[] {
-  if (!mapName.startsWith('de_')){
-    mapName = `de_${mapName.toLowerCase()}`
+  
+    let mapOdds = this.getMapOdds(mapName, odds)
+    row = this.appendTeamMapCols(row, 'team1', mapOdds[0])
+    row = this.appendTeamMapCols(row, 'team2', mapOdds[1])
+    row = this.appendTeamMapCols(row, 'self', mapOdds[2])
+    return row
   }
-  let team1MapOdds: MapOdds;
-  let team2MapOdds: MapOdds;
-  let selfMapOdds: MapOdds;
-  odds.team1.forEach(mapOdds => {
-    if (mapOdds.name === mapName) {
-      team1MapOdds = mapOdds
-    }
-  });
-  odds.team2.forEach(mapOdds => {
-    if (mapOdds.name === mapName) {
-      team2MapOdds = mapOdds
-    }
-  });
-  odds.team2.forEach(mapOdds => {
-    if (mapOdds.name === mapName) {
-      selfMapOdds = mapOdds
-    }
-  });
-  let mapOdds = [team1MapOdds, team2MapOdds, selfMapOdds]
-  return mapOdds
-}
-
-function buildTeamOddsDiv(team: string, mapOdds: MapOdds){
-  const teamDiv = document.createElement('div');
-  teamDiv.setAttribute('id', `${team}-${mapOdds.name}-odds`)
-  teamDiv.classList.add('team-odds')
-  teamDiv.innerHTML = mapOdds.winPct.toFixed(2);
-  teamDiv.style.backgroundColor = getColor(1 - mapOdds.winPct)
-  return teamDiv
-}
-
-function showMapOdds(rootDiv: ShadowRoot, oddsDiv: ChildNode, team1Odds: MapOdds, team2Odds: MapOdds) {
-  if (!rootDiv.getElementById(`team1-${team1Odds.name}-odds`)){
-    const team1OddsDiv = buildTeamOddsDiv('team1', team1Odds);
-    const team2OddsDiv = buildTeamOddsDiv('team2', team2Odds);
-    oddsDiv.appendChild(team1OddsDiv)
-    oddsDiv.appendChild(team2OddsDiv)
-  }
-  rootDiv.getElementById
-}
-
-
-function refreshOdds() {
-  log('refreshOdds')
-  let matchId = isMatchLobby()
-  let rootDiv = document.getElementById("parasite-container").shadowRoot
-  let matchRoomDiv = rootDiv.getElementById("MATCHROOM-OVERVIEW")
-  if (!matchRoomDiv){
-    log('notMatchRoom')
-    return
-  }
-  let infoDiv = matchRoomDiv.querySelector('[name="info"]');
-  let statsTable = rootDiv.getElementById('nerdalyzer-table')
-  /*
-  let statusDiv = matchRoomDiv.firstChild.firstChild.childNodes[1].childNodes[1].firstChild
-  let status = statusDiv.textContent as MatchStatus
-  let roster1Div = matchRoomDiv.querySelector('[name="roster1"]');
-  let roster2Div = matchRoomDiv.querySelector('[name="roster2"]');
-  */
-  if (!matchId) {
-    log('notLobby')
-    checkMatch()
-    return
-  } else if(statsTable && statsTable.getAttribute('name') === matchId) {
-    log('sameLobby')
-    return
-  } else if (statsTable && statsTable.getAttribute('name') !== MATCH.id) {
-    log('removeTable')
-    infoDiv.removeChild(statsTable)
-    clearInterval(MATCH_REFRESH)
-    checkMatch()
-    return
-  }
-  log('appendTable')
-  let odds: MatchOdds = MATCH.odds()
-  let [header, mapStats] = buildTable(odds)
-  infoDiv.appendChild(document.createElement('br'))
-  infoDiv.appendChild(header)
-  infoDiv.appendChild(mapStats)
-}
-
-function isMatchLobby() {
-  let match = window.location.href.match(REX_MATCH_URL)
-  if (match) { return match.groups.matchId }
-  return null
-}
-
-function checkMatch(){
-  log('checkMatch')
-  let matchId = isMatchLobby()
-  if (matchId) {
-    log(`matchId:${matchId}`)
-    // get match details from api, display odds
-    MATCH = new Match(matchId, refreshOdds)
-  }
-}
-
-// on url change, check match
-let url = location.href;
-document.body.addEventListener('click', ()=>{
-    requestAnimationFrame(()=>{
-      url!==location.href && setTimeout(checkMatch, 2000);
-      url = location.href;
+  
+  buildHeaderRow(): HTMLTableRowElement {
+    let header = document.createElement('tr')
+    let head1 = document.createElement('th')
+    let head2 = document.createElement('th')
+    let head3 = document.createElement('th')
+    let head4 = document.createElement('th')
+    let headStats = [head2, head3, head4]
+    head1.setAttribute('id', this.id)
+    head2.textContent = this.data.teams.faction1.name
+    head3.textContent = this.data.teams.faction2.name
+    head4.textContent = this.nickname
+    headStats.forEach(f => {
+      f.colSpan = 3
+      f.style.maxWidth = '100px'
+      f.style.overflow = 'hidden'
+      f.style.textOverflow = 'ellipsis'
+      f.style.whiteSpace = 'nowrap'
     });
-}, true);
+    header.appendChild(head1)
+    header.appendChild(head2)
+    header.appendChild(head3)
+    header.appendChild(head4)
+    return header
+  }
+  
+  buildLabelsRow(): HTMLTableRowElement {
+    let labels = document.createElement('tr')
+    let l1 = document.createElement('th')
+    labels.appendChild(l1)
+    for (let label in ['team1', 'team2', 'self']) {
+      let l2 = document.createElement('th')
+      let l3 = document.createElement('th')
+      let l4 = document.createElement('th')
+      l2.textContent = 'won'
+      l3.textContent = 'played'
+      l4.textContent = 'winPct'
+      labels.appendChild(l2)
+      labels.appendChild(l3)
+      labels.appendChild(l4)
+    }
+    return labels
+  }
+  
+  buildTable(): HTMLTableElement {
+    let odds = this.odds()
+    let mapStats = document.createElement('table');
+    mapStats.setAttribute('id', 'nerdalyzer-table')
+    mapStats.setAttribute('name', this.id)
+    let tbody = document.createElement('tbody');
+    tbody.appendChild(this.buildHeaderRow())
+    tbody.appendChild(this.buildLabelsRow())
+    this.maps.forEach(mapName => {
+      tbody.appendChild(this.buildTeamMapRow(mapName, odds))
+    });
+    mapStats.appendChild(tbody)
+    let sectionHeader = document.createElement('strong')
+    sectionHeader.textContent = 'Nerdalyzer'
+    // TODO add sectionHeader
+    return mapStats
+  }
+  
+  getColor(value) {
+    var hue = ((1 - value) * 120).toString(10);
+    return ["hsl(", hue, ",100%,30%)"].join("");
+  }
+  
+  getMapOdds(mapName: string, odds: MatchOdds): MapOdds[] {
+    if (!mapName.startsWith('de_')) {
+      mapName = `de_${mapName.toLowerCase()}`
+    }
+    let team1MapOdds: MapOdds;
+    let team2MapOdds: MapOdds;
+    let selfMapOdds: MapOdds;
+    odds.team1.forEach(mapOdds => {
+      if (mapOdds.name === mapName) {
+        team1MapOdds = mapOdds
+      }
+    });
+    odds.team2.forEach(mapOdds => {
+      if (mapOdds.name === mapName) {
+        team2MapOdds = mapOdds
+      }
+    });
+    odds.self.forEach(mapOdds => {
+      if (mapOdds.name === mapName) {
+        selfMapOdds = mapOdds
+      }
+    });
+    let mapOdds = [team1MapOdds, team2MapOdds, selfMapOdds]
+    return mapOdds
+  }
 
-// on navigation, check match
-window.addEventListener('popstate', function (event) {
-  checkMatch()
-});
+  showTable() {
+    this.log('func:showTable')
+    let table = this.buildTable()
+    this.infoDiv.appendChild(table)
+  }
 
-// on load, check match
-checkMatch();
+  loaded() {
+    this.log('func:loaded')
+    if (this.team1.length === 5 && this.team2.length === 5) {
+      this.showTable()
+    }
+  }
+}
+
+let nerd = new Nerdalyzer()

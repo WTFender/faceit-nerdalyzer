@@ -7,5 +7,6 @@
       "es2021"
     ],
     "outFile": "extension/faceit-nerdalyzer.js"
-  }
+  },
+  "typings": "src/types.d.ts"
 }

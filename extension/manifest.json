@@ -28,8 +28,5 @@
   },
   "cross_origin_opener_policy": {
     "value": "same-origin"
-  },
-  "permissions": [
-    "storage"
-  ]
+  }
 }

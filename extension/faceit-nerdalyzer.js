@@ -6,6 +6,7 @@ class Nerdalyzer {
     rexMatchUrl;
     // retrieved elements
     id; // match id
+    userId;
     shadow;
     matchroom;
     infoDiv;
@@ -40,6 +41,7 @@ class Nerdalyzer {
         this.team2 = [];
         this.self = [];
         this.selfStats = [];
+        this.userId = '';
         this.refresh = 0;
         let nerd = this;
         nerd.refresh = setInterval(() => {
@@ -50,9 +52,11 @@ class Nerdalyzer {
         this.log('func:process');
         if (!this.isMatchLobbyUrl()) {
             this.reset();
+            return;
         }
         if (!this.hasElements()) {
             this.reset();
+            return;
         }
         if (this.isMatchTable()) {
             // nice
@@ -85,6 +89,16 @@ class Nerdalyzer {
         this.matchroom = null;
         this.infoDiv = null;
         this.table = null;
+    }
+    isUser() {
+        let userData = document.getElementById('oneTrustParam').innerHTML;
+        let match = userData.match(/\"id\"\:\"(?<userId>(\w+\-?){5})\"/);
+        if ('userId' in match.groups) {
+            this.userId = match.groups.userId;
+            console.log(this.userId);
+            return true;
+        }
+        return false;
     }
     isMatchLobbyUrl() {
         let isLobby = false;
@@ -144,22 +158,19 @@ class Nerdalyzer {
     getPlayers() {
         this.log('func:getPlayers');
         this.data.teams.faction1.roster.forEach(player => {
-            this.getPlayerStats(player, this.team1, this.self);
+            this.getPlayerStats(player.id, this.team1);
         });
         this.data.teams.faction2.roster.forEach(player => {
-            this.getPlayerStats(player, this.team2, this.self);
+            this.getPlayerStats(player.id, this.team2);
         });
     }
-    getPlayerStats(player, team, self) {
-        this.log(`func:getPlayerStats:${player.id}`);
-        fetch(this.baseurl + `/stats/v1/stats/users/${player.id}/games/csgo`)
+    getPlayerStats(playerId, team) {
+        this.log(`func:getPlayerStats:${playerId}`);
+        fetch(this.baseurl + `/stats/v1/stats/users/${playerId}/games/csgo`)
             .then((response) => response.json())
             .then((data) => {
             if (data.lifetime) {
                 team.push(data);
-                if (player.nickname === this.nickname) {
-                    self.push(data);
-                }
                 this.loaded();
             }
             else {
@@ -216,10 +227,13 @@ class Nerdalyzer {
         this.log(odds);
         return odds;
     }
-    appendTeamMapCols(row, team, mapOdds) {
+    appendTeamMapCols(row, color, team, mapOdds) {
         let f_won = document.createElement('td');
         let f_played = document.createElement('td');
         let f_winPct = document.createElement('td');
+        f_won.style.backgroundColor = color;
+        f_played.style.backgroundColor = color;
+        f_winPct.style.backgroundColor = color;
         f_won.setAttribute('id', `${team}-${mapOdds.name}-won`);
         f_played.setAttribute('id', `${team}-${mapOdds.name}-played`);
         f_winPct.setAttribute('id', `${team}-${mapOdds.name}-winpct`);
@@ -242,9 +256,11 @@ class Nerdalyzer {
         f1.style.textAlign = 'right';
         row.appendChild(f1);
         let mapOdds = this.getMapOdds(mapName, odds);
-        row = this.appendTeamMapCols(row, 'team1', mapOdds[0]);
-        row = this.appendTeamMapCols(row, 'team2', mapOdds[1]);
-        row = this.appendTeamMapCols(row, 'self', mapOdds[2]);
+        row = this.appendTeamMapCols(row, '#2c2c2c', 'team1', mapOdds[0]);
+        row = this.appendTeamMapCols(row, '#3c3c3c', 'team2', mapOdds[1]);
+        if (this.selfStats.length > 0) {
+            row = this.appendTeamMapCols(row, '#2c2c2c', 'self', mapOdds[2]);
+        }
         return row;
     }
     buildHeaderRow() {
@@ -258,6 +274,9 @@ class Nerdalyzer {
         head2.textContent = this.data.teams.faction1.name;
         head3.textContent = this.data.teams.faction2.name;
         head4.textContent = this.nickname;
+        head2.style.backgroundColor = '#2c2c2c';
+        head3.style.backgroundColor = '#3c3c3c';
+        head4.style.backgroundColor = '#2c2c2c';
         headStats.forEach(f => {
             f.colSpan = 3;
             f.style.maxWidth = '100px';
@@ -268,14 +287,20 @@ class Nerdalyzer {
         header.appendChild(head1);
         header.appendChild(head2);
         header.appendChild(head3);
-        header.appendChild(head4);
+        if (this.selfStats.length > 0) {
+            header.appendChild(head4);
+        }
         return header;
     }
     buildLabelsRow() {
         let labels = document.createElement('tr');
         let l1 = document.createElement('th');
         labels.appendChild(l1);
-        for (let label in ['team1', 'team2', 'self']) {
+        let fieldLabels = ['team1', 'team2'];
+        if (this.selfStats.length > 0) {
+            fieldLabels.push('self');
+        }
+        for (let label in fieldLabels) {
             let l2 = document.createElement('th');
             let l3 = document.createElement('th');
             let l4 = document.createElement('th');
@@ -293,6 +318,13 @@ class Nerdalyzer {
         let mapStats = document.createElement('table');
         mapStats.setAttribute('id', 'nerdalyzer-table');
         mapStats.setAttribute('name', this.id);
+        mapStats.style.width = '100%';
+        mapStats.style.padding = '5px';
+        mapStats.style.fontSize = '.70em';
+        mapStats.style.backgroundColor = '#1f1f1f';
+        mapStats.style.borderRadius = '4px';
+        mapStats.style.marginLeft = 'auto';
+        mapStats.style.marginRight = 'auto';
         let tbody = document.createElement('tbody');
         tbody.appendChild(this.buildHeaderRow());
         tbody.appendChild(this.buildLabelsRow());
@@ -306,8 +338,15 @@ class Nerdalyzer {
         return mapStats;
     }
     getColor(value) {
+        if (value >= .5) {
+            value = value * 1.12;
+        }
+        else {
+            value = value * .88;
+        }
         var hue = ((1 - value) * 120).toString(10);
-        return ["hsl(", hue, ",100%,30%)"].join("");
+        var color = ["hsl(", hue, ",100%,30%)"].join("");
+        return color;
     }
     getMapOdds(mapName, odds) {
         if (!mapName.startsWith('de_')) {
@@ -337,7 +376,12 @@ class Nerdalyzer {
     showTable() {
         this.log('func:showTable');
         let table = this.buildTable();
-        this.infoDiv.appendChild(table);
+        let titleDiv = document.createElement('div');
+        let title = document.createElement('strong');
+        title.textContent = 'Nerdalyzer';
+        titleDiv.appendChild(title);
+        this.infoDiv.firstChild.appendChild(titleDiv);
+        this.infoDiv.firstChild.appendChild(table);
     }
     loaded() {
         this.log('func:loaded');
@@ -346,4 +390,5 @@ class Nerdalyzer {
         }
     }
 }
-let nerd = new Nerdalyzer();
+var OneTrust; // Injected in page?
+let nerd = new Nerdalyzer(true);

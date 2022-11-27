@@ -6,6 +6,7 @@ class Nerdalyzer {
   rexMatchUrl: RegExp;
   // retrieved elements
   id: string; // match id
+  userId: string;
   shadow: ShadowRoot;
   matchroom: HTMLElement;
   infoDiv: HTMLElement;
@@ -20,7 +21,7 @@ class Nerdalyzer {
   selfStats: MapOdds[];
   table?: HTMLElement;
 
-  constructor(debug=false, poll=2000) {
+  constructor(debug = false, poll = 2000) {
     this.log('init:Nerdalyzer')
     this.debug = debug
     this.app = 'nerdalyzer'
@@ -41,6 +42,7 @@ class Nerdalyzer {
     this.team2 = []
     this.self = []
     this.selfStats = []
+    this.userId = ''
     this.refresh = 0
     let nerd = this
     nerd.refresh = setInterval(() => {
@@ -50,8 +52,8 @@ class Nerdalyzer {
 
   process() {
     this.log('func:process')
-    if (!this.isMatchLobbyUrl()) { this.reset() }
-    if (!this.hasElements()) { this.reset() }
+    if (!this.isMatchLobbyUrl()) { this.reset(); return }
+    if (!this.hasElements()) { this.reset(); return }
     if (this.isMatchTable()) {
       // nice
     } else if (this.table) {
@@ -82,6 +84,17 @@ class Nerdalyzer {
     this.matchroom = null;
     this.infoDiv = null;
     this.table = null;
+  }
+
+  isUser() {
+    let userData = document.getElementById('oneTrustParam').innerHTML
+    let match = userData.match(/\"id\"\:\"(?<userId>(\w+\-?){5})\"/)
+    if ('userId' in match.groups) {
+      this.userId = match.groups.userId
+      console.log(this.userId)
+      return true
+    }
+    return false
   }
 
   isMatchLobbyUrl() {
@@ -139,23 +152,20 @@ class Nerdalyzer {
   getPlayers() {
     this.log('func:getPlayers')
     this.data.teams.faction1.roster.forEach(player => {
-      this.getPlayerStats(player, this.team1, this.self)
+      this.getPlayerStats(player.id, this.team1)
     });
     this.data.teams.faction2.roster.forEach(player => {
-      this.getPlayerStats(player, this.team2, this.self)
+      this.getPlayerStats(player.id, this.team2)
     });
   }
 
-  getPlayerStats(player: any, team: PlayerStatsData[], self: PlayerStatsData[]) {
-    this.log(`func:getPlayerStats:${player.id}`)
-    fetch(this.baseurl + `/stats/v1/stats/users/${player.id}/games/csgo`)
+  getPlayerStats(playerId: any, team: PlayerStatsData[]) {
+    this.log(`func:getPlayerStats:${playerId}`)
+    fetch(this.baseurl + `/stats/v1/stats/users/${playerId}/games/csgo`)
       .then((response) => response.json())
       .then((data) => {
         if (data.lifetime) {
           team.push(data)
-          if (player.nickname === this.nickname) {
-            self.push(data)
-          }
           this.loaded()
         } else {
           new Error(data)
@@ -215,10 +225,13 @@ class Nerdalyzer {
     return odds;
   }
 
-  appendTeamMapCols(row: HTMLTableRowElement, team: string, mapOdds: MapOdds): HTMLTableRowElement {
+  appendTeamMapCols(row: HTMLTableRowElement, color: string, team: string, mapOdds: MapOdds): HTMLTableRowElement {
     let f_won = document.createElement('td')
     let f_played = document.createElement('td')
     let f_winPct = document.createElement('td')
+    f_won.style.backgroundColor = color
+    f_played.style.backgroundColor = color
+    f_winPct.style.backgroundColor = color
     f_won.setAttribute('id', `${team}-${mapOdds.name}-won`)
     f_played.setAttribute('id', `${team}-${mapOdds.name}-played`)
     f_winPct.setAttribute('id', `${team}-${mapOdds.name}-winpct`)
@@ -234,21 +247,23 @@ class Nerdalyzer {
     row.appendChild(f_winPct)
     return row
   }
-  
+
   buildTeamMapRow(mapName: string, odds: MatchOdds): HTMLTableRowElement {
     let row = document.createElement('tr')
     let f1 = document.createElement('td')
     f1.textContent = mapName.replace('de_', '')
     f1.style.textAlign = 'right'
     row.appendChild(f1)
-  
+
     let mapOdds = this.getMapOdds(mapName, odds)
-    row = this.appendTeamMapCols(row, 'team1', mapOdds[0])
-    row = this.appendTeamMapCols(row, 'team2', mapOdds[1])
-    row = this.appendTeamMapCols(row, 'self', mapOdds[2])
+    row = this.appendTeamMapCols(row, '#2c2c2c', 'team1', mapOdds[0])
+    row = this.appendTeamMapCols(row, '#3c3c3c', 'team2', mapOdds[1])
+    if (this.selfStats.length > 0) {
+      row = this.appendTeamMapCols(row, '#2c2c2c', 'self', mapOdds[2])
+    }
     return row
   }
-  
+
   buildHeaderRow(): HTMLTableRowElement {
     let header = document.createElement('tr')
     let head1 = document.createElement('th')
@@ -260,6 +275,9 @@ class Nerdalyzer {
     head2.textContent = this.data.teams.faction1.name
     head3.textContent = this.data.teams.faction2.name
     head4.textContent = this.nickname
+    head2.style.backgroundColor = '#2c2c2c'
+    head3.style.backgroundColor = '#3c3c3c'
+    head4.style.backgroundColor = '#2c2c2c'
     headStats.forEach(f => {
       f.colSpan = 3
       f.style.maxWidth = '100px'
@@ -267,18 +285,25 @@ class Nerdalyzer {
       f.style.textOverflow = 'ellipsis'
       f.style.whiteSpace = 'nowrap'
     });
+
     header.appendChild(head1)
     header.appendChild(head2)
     header.appendChild(head3)
-    header.appendChild(head4)
+    if (this.selfStats.length > 0) {
+      header.appendChild(head4)
+    }
     return header
   }
-  
+
   buildLabelsRow(): HTMLTableRowElement {
     let labels = document.createElement('tr')
     let l1 = document.createElement('th')
     labels.appendChild(l1)
-    for (let label in ['team1', 'team2', 'self']) {
+    let fieldLabels = ['team1', 'team2']
+    if (this.selfStats.length > 0) {
+      fieldLabels.push('self')
+    }
+    for (let label in fieldLabels) {
       let l2 = document.createElement('th')
       let l3 = document.createElement('th')
       let l4 = document.createElement('th')
@@ -291,12 +316,19 @@ class Nerdalyzer {
     }
     return labels
   }
-  
+
   buildTable(): HTMLTableElement {
     let odds = this.odds()
     let mapStats = document.createElement('table');
     mapStats.setAttribute('id', 'nerdalyzer-table')
     mapStats.setAttribute('name', this.id)
+    mapStats.style.width = '100%'
+    mapStats.style.padding = '5px'
+    mapStats.style.fontSize = '.70em'
+    mapStats.style.backgroundColor = '#1f1f1f'
+    mapStats.style.borderRadius = '4px'
+    mapStats.style.marginLeft = 'auto'
+    mapStats.style.marginRight = 'auto'
     let tbody = document.createElement('tbody');
     tbody.appendChild(this.buildHeaderRow())
     tbody.appendChild(this.buildLabelsRow())
@@ -309,12 +341,18 @@ class Nerdalyzer {
     // TODO add sectionHeader
     return mapStats
   }
-  
+
   getColor(value) {
+    if (value >= .5) {
+      value = value * 1.12
+    } else {
+      value = value * .88
+    }
     var hue = ((1 - value) * 120).toString(10);
-    return ["hsl(", hue, ",100%,30%)"].join("");
+    var color = ["hsl(", hue, ",100%,30%)"].join("")
+    return color;
   }
-  
+
   getMapOdds(mapName: string, odds: MatchOdds): MapOdds[] {
     if (!mapName.startsWith('de_')) {
       mapName = `de_${mapName.toLowerCase()}`
@@ -344,7 +382,12 @@ class Nerdalyzer {
   showTable() {
     this.log('func:showTable')
     let table = this.buildTable()
-    this.infoDiv.appendChild(table)
+    let titleDiv = document.createElement('div')
+    let title = document.createElement('strong')
+    title.textContent = 'Nerdalyzer'
+    titleDiv.appendChild(title)
+    this.infoDiv.firstChild.appendChild(titleDiv)
+    this.infoDiv.firstChild.appendChild(table)
   }
 
   loaded() {
@@ -355,4 +398,5 @@ class Nerdalyzer {
   }
 }
 
-let nerd = new Nerdalyzer()
+var OneTrust; // Injected in page?
+let nerd = new Nerdalyzer(true)

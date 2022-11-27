@@ -6,7 +6,6 @@ class Nerdalyzer {
   rexMatchUrl: RegExp;
   // retrieved elements
   id: string; // match id
-  userId: string;
   shadow: ShadowRoot;
   matchroom: HTMLElement;
   infoDiv: HTMLElement;
@@ -42,8 +41,6 @@ class Nerdalyzer {
     this.team2 = []
     this.self = []
     this.selfStats = []
-    this.userId = ''
-    this.refresh = 
     this.refresh = setInterval(this.process, poll);
   }
 

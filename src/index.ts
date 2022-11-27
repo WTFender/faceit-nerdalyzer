@@ -26,7 +26,7 @@ class Nerdalyzer {
     this.debug = debug
     this.app = 'nerdalyzer'
     this.baseurl = 'https://api.faceit.com'
-    this.rexMatchUrl = /^https:\/\/www\.faceit\.com\/\w+\/csgo\/room\/(?<matchId>1(\-\w+){5})$/
+    this.rexMatchUrl = /^https:\/\/www\.faceit\.com\/\w+\/csgo\/room\/(?<matchId>1(-\w+){5})$/
     this.maps = [
       'de_ancient',
       'de_anubis',
@@ -43,11 +43,8 @@ class Nerdalyzer {
     this.self = []
     this.selfStats = []
     this.userId = ''
-    this.refresh = 0
-    let nerd = this
-    nerd.refresh = setInterval(() => {
-      nerd.process()
-    }, poll);
+    this.refresh = 
+    this.refresh = setInterval(this.process, poll);
   }
 
   process() {
@@ -86,20 +83,9 @@ class Nerdalyzer {
     this.table = null;
   }
 
-  isUser() {
-    let userData = document.getElementById('oneTrustParam').innerHTML
-    let match = userData.match(/\"id\"\:\"(?<userId>(\w+\-?){5})\"/)
-    if ('userId' in match.groups) {
-      this.userId = match.groups.userId
-      console.log(this.userId)
-      return true
-    }
-    return false
-  }
-
   isMatchLobbyUrl() {
     let isLobby = false
-    let match = window.location.href.match(this.rexMatchUrl)
+    const match = window.location.href.match(this.rexMatchUrl)
     if (match) {
       this.id = match.groups.matchId
       isLobby = true
@@ -159,7 +145,7 @@ class Nerdalyzer {
     });
   }
 
-  getPlayerStats(playerId: any, team: PlayerStatsData[]) {
+  getPlayerStats(playerId: string, team: PlayerStatsData[]) {
     this.log(`func:getPlayerStats:${playerId}`)
     fetch(this.baseurl + `/stats/v1/stats/users/${playerId}/games/csgo`)
       .then((response) => response.json())
@@ -189,8 +175,8 @@ class Nerdalyzer {
           if (segment['_id']['gameMode'] === '5v5' &&
             segment['_id']['segmentId'] === 'csgo_map') {
             if (map in segment['segments']) {
-              let played = Number(segment['segments'][map]['m1'])
-              let won = Number(segment['segments'][map]['m2'])
+              const played = Number(segment['segments'][map]['m1'])
+              const won = Number(segment['segments'][map]['m2'])
               mapOdds.played += played
               mapOdds.won += won
               if (player.nickname === this.nickname) {
@@ -226,9 +212,9 @@ class Nerdalyzer {
   }
 
   appendTeamMapCols(row: HTMLTableRowElement, color: string, team: string, mapOdds: MapOdds): HTMLTableRowElement {
-    let f_won = document.createElement('td')
-    let f_played = document.createElement('td')
-    let f_winPct = document.createElement('td')
+    const f_won = document.createElement('td')
+    const f_played = document.createElement('td')
+    const f_winPct = document.createElement('td')
     f_won.style.backgroundColor = color
     f_played.style.backgroundColor = color
     f_winPct.style.backgroundColor = color
@@ -250,12 +236,12 @@ class Nerdalyzer {
 
   buildTeamMapRow(mapName: string, odds: MatchOdds): HTMLTableRowElement {
     let row = document.createElement('tr')
-    let f1 = document.createElement('td')
+    const f1 = document.createElement('td')
     f1.textContent = mapName.replace('de_', '')
     f1.style.textAlign = 'right'
     row.appendChild(f1)
 
-    let mapOdds = this.getMapOdds(mapName, odds)
+    const mapOdds = this.getMapOdds(mapName, odds)
     row = this.appendTeamMapCols(row, '#2c2c2c', 'team1', mapOdds[0])
     row = this.appendTeamMapCols(row, '#3c3c3c', 'team2', mapOdds[1])
     if (this.selfStats.length > 0) {
@@ -265,12 +251,12 @@ class Nerdalyzer {
   }
 
   buildHeaderRow(): HTMLTableRowElement {
-    let header = document.createElement('tr')
-    let head1 = document.createElement('th')
-    let head2 = document.createElement('th')
-    let head3 = document.createElement('th')
-    let head4 = document.createElement('th')
-    let headStats = [head2, head3, head4]
+    const header = document.createElement('tr')
+    const head1 = document.createElement('th')
+    const head2 = document.createElement('th')
+    const head3 = document.createElement('th')
+    const head4 = document.createElement('th')
+    const headStats = [head2, head3, head4]
     head1.setAttribute('id', this.id)
     head2.textContent = this.data.teams.faction1.name
     head3.textContent = this.data.teams.faction2.name
@@ -296,30 +282,30 @@ class Nerdalyzer {
   }
 
   buildLabelsRow(): HTMLTableRowElement {
-    let labels = document.createElement('tr')
-    let l1 = document.createElement('th')
+    const labels = document.createElement('tr')
+    const l1 = document.createElement('th')
     labels.appendChild(l1)
-    let fieldLabels = ['team1', 'team2']
+    const fieldLabels = ['team1', 'team2']
     if (this.selfStats.length > 0) {
       fieldLabels.push('self')
     }
-    for (let label in fieldLabels) {
-      let l2 = document.createElement('th')
-      let l3 = document.createElement('th')
-      let l4 = document.createElement('th')
+    for (let i=0; i++; i <= fieldLabels.length){
+      const l2 = document.createElement('th')
+      const l3 = document.createElement('th')
+      const l4 = document.createElement('th')
       l2.textContent = 'won'
       l3.textContent = 'played'
       l4.textContent = 'winPct'
       labels.appendChild(l2)
       labels.appendChild(l3)
-      labels.appendChild(l4)
+      labels.appendChild(l4)     
     }
     return labels
   }
 
   buildTable(): HTMLTableElement {
-    let odds = this.odds()
-    let mapStats = document.createElement('table');
+    const odds = this.odds()
+    const mapStats = document.createElement('table');
     mapStats.setAttribute('id', 'nerdalyzer-table')
     mapStats.setAttribute('name', this.id)
     mapStats.style.width = '100%'
@@ -329,14 +315,14 @@ class Nerdalyzer {
     mapStats.style.borderRadius = '4px'
     mapStats.style.marginLeft = 'auto'
     mapStats.style.marginRight = 'auto'
-    let tbody = document.createElement('tbody');
+    const tbody = document.createElement('tbody');
     tbody.appendChild(this.buildHeaderRow())
     tbody.appendChild(this.buildLabelsRow())
     this.maps.forEach(mapName => {
       tbody.appendChild(this.buildTeamMapRow(mapName, odds))
     });
     mapStats.appendChild(tbody)
-    let sectionHeader = document.createElement('strong')
+    const sectionHeader = document.createElement('strong')
     sectionHeader.textContent = 'Nerdalyzer'
     // TODO add sectionHeader
     return mapStats
@@ -348,8 +334,8 @@ class Nerdalyzer {
     } else {
       value = value * .88
     }
-    var hue = ((1 - value) * 120).toString(10);
-    var color = ["hsl(", hue, ",100%,30%)"].join("")
+    const hue = ((1 - value) * 120).toString(10);
+    const color = ["hsl(", hue, ",100%,30%)"].join("")
     return color;
   }
 
@@ -375,15 +361,15 @@ class Nerdalyzer {
         selfMapOdds = mapOdds
       }
     });
-    let mapOdds = [team1MapOdds, team2MapOdds, selfMapOdds]
+    const mapOdds = [team1MapOdds, team2MapOdds, selfMapOdds]
     return mapOdds
   }
 
   showTable() {
     this.log('func:showTable')
-    let table = this.buildTable()
-    let titleDiv = document.createElement('div')
-    let title = document.createElement('strong')
+    const table = this.buildTable()
+    const titleDiv = document.createElement('div')
+    const title = document.createElement('strong')
     title.textContent = 'Nerdalyzer'
     titleDiv.appendChild(title)
     this.infoDiv.firstChild.appendChild(titleDiv)
@@ -398,5 +384,4 @@ class Nerdalyzer {
   }
 }
 
-var OneTrust; // Injected in page?
-let nerd = new Nerdalyzer(true)
+new Nerdalyzer(true)

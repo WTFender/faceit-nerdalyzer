@@ -382,4 +382,4 @@ class Nerdalyzer {
   }
 }
 
-new Nerdalyzer(true)
+new Nerdalyzer()

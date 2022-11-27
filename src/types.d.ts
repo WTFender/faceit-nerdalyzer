@@ -1,5 +1,3 @@
-type MatchStatus = 'Voting' | 'Configuring' | 'Ready' | 'Finished'
-
 type PlayerMapOdds = {
   played: number
   won: number
@@ -7,7 +5,6 @@ type PlayerMapOdds = {
 
 type MapOdds = {
   name: string
-  rank: number
   played: number
   won: number
   winPct: number

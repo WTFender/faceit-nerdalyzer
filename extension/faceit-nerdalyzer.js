@@ -171,7 +171,6 @@ class Nerdalyzer {
         this.maps.forEach(map => {
             const mapOdds = {
                 name: map,
-                rank: 0,
                 played: 0,
                 won: 0,
                 winPct: 0,
@@ -188,7 +187,6 @@ class Nerdalyzer {
                             if (player.nickname === this.nickname) {
                                 this.selfStats.push({
                                     name: map,
-                                    rank: 0,
                                     played: played,
                                     won: won,
                                     winPct: (won / played)

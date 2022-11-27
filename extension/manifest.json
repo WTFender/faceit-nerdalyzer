@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Faceit Nerdalyzer",
   "version": "1.0.0",
-  "description": "Display team map stats in the faceit match lobby",
+  "description": "Display map stats in the faceit match lobby",
   "author": "WTFender",
   "homepage_url": "https://wtfender.com",
   "icons": {
